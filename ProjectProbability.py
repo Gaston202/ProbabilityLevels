@@ -3,7 +3,7 @@ from tkinter import ttk
 import yfinance as yf
 import pandas as pd
 import datetime
-
+import math
 
 vix_ticker = yf.Ticker("^VIX")
 today = datetime.date.today().strftime("%Y-%m-%d")
@@ -18,7 +18,30 @@ def vixvalue(date):
     vix_value = vix_data.loc[date_str]
 
     return vix_value
+def VolTimeframe (date):
+    annual_v=vixvalue(date)
+    Vol_Daily=annual_v/math.sqrt(252)
+    Vol_Weekly=annual_v/math.sqrt(52)
+    Vol_Monthly=annual_v/math.sqrt(12)
+    All_Vols=[Vol_Daily,Vol_Weekly,Vol_Monthly]
+    return All_Vols
+def LoadTicker(ticker_symbol,interval):
+    ticker = yf.Ticker(ticker_symbol)
+    data = ticker.history(period="5y", interval=interval)
+    return data["Close"]
+def GetCloses(ticker_symbol,date):
+    date_str = date.strftime("%Y-%m-%d")
+    Daily_data=LoadTicker(ticker_symbol,"1d")
+    Weekly_data=LoadTicker(ticker_symbol,"1wk")
+    Monthly_data=LoadTicker(ticker_symbol,"1mo")
+    if Daily_data is None or Weekly_data is None or Monthly_data is None:
+        return None
 
-date1=datetime.date(2024,5,2)
-value=vixvalue(date1)
-print(f"Vix value on {date1} is {value}")
+    Closes=Daily_data.loc[date_str]
+    return Closes
+
+
+
+ticker_symbol = "AAPL"
+date = datetime.date(2023, 12, 6) 
+closes = GetCloses(ticker_symbol, date)
