@@ -29,15 +29,27 @@ def LoadTicker(ticker_symbol,interval):
     ticker = yf.Ticker(ticker_symbol)
     data = ticker.history(period="5y", interval=interval)
     return data["Close"]
-def GetCloses(ticker_symbol,date):
+def GetCloses(ticker_symbol, date):
     date_str = date.strftime("%Y-%m-%d")
-    Daily_data=LoadTicker(ticker_symbol,"1d")
-    Weekly_data=LoadTicker(ticker_symbol,"1wk")
-    Monthly_data=LoadTicker(ticker_symbol,"1mo")
+    
+    Daily_data = LoadTicker(ticker_symbol, "1d")
+    Weekly_data = LoadTicker(ticker_symbol, "1wk")
+    Monthly_data = LoadTicker(ticker_symbol, "1mo")
+    
     if Daily_data is None or Weekly_data is None or Monthly_data is None:
         return None
-
-    Closes=Daily_data.loc[date_str]
+    
+    daily_close = Daily_data.loc[date_str]
+    
+    weekly_dates = Weekly_data.index
+    weekly_date = weekly_dates[weekly_dates <= date_str].max()
+    weekly_close = Weekly_data.loc[weekly_date]
+    
+    monthly_dates = Monthly_data.index
+    monthly_date = monthly_dates[monthly_dates <= date_str].max()
+    monthly_close = Monthly_data.loc[monthly_date]
+    
+    Closes = [float(daily_close), float(weekly_close), float(monthly_close)]
     return Closes
 
 
@@ -45,3 +57,4 @@ def GetCloses(ticker_symbol,date):
 ticker_symbol = "AAPL"
 date = datetime.date(2023, 12, 6) 
 closes = GetCloses(ticker_symbol, date)
+print(closes)
