@@ -20,9 +20,9 @@ def vixvalue(date):
     return vix_value
 def VolTimeframe (date):
     annual_v=vixvalue(date)
-    Vol_Daily=annual_v/math.sqrt(252)
-    Vol_Weekly=annual_v/math.sqrt(52)
-    Vol_Monthly=annual_v/math.sqrt(12)
+    Vol_Daily=(annual_v/math.sqrt(252))/100
+    Vol_Weekly=(annual_v/math.sqrt(52))/100
+    Vol_Monthly=(annual_v/math.sqrt(12))/100
     All_Vols=[Vol_Daily,Vol_Weekly,Vol_Monthly]
     return All_Vols
 def LoadTicker(ticker_symbol,interval):
@@ -55,7 +55,7 @@ def CalculateLevels(ticker_symbol,date):
 
     Closes=GetCloses(ticker_symbol,date)
     AllVols=VolTimeframe(date)
-    Daily_levels =[ AllVols[0] * Closes[0] +Closes[0] , 2*AllVols[0]*Closes[0]+Closes[0] , 3*AllVols[0]*Closes[0]+Closes[0] ]
+    Daily_levels =[ (AllVols[0] * Closes[0]) +Closes[0] , (2*AllVols[0]*Closes[0]) +Closes[0] , (3*AllVols[0]*Closes[0])+Closes[0] ]
     weekly_levels=[ AllVols[1] * Closes[1] +Closes[1] , 2*AllVols[1]*Closes[1]+Closes[1] , 3*AllVols[1]*Closes[1]+Closes[1] ]
     monthly_levels=[ AllVols[2] * Closes[2] +Closes[2] , 2*AllVols[2]*Closes[2]+Closes[2] , 3*AllVols[2]*Closes[2]+Closes[2] ]
     Levels=[Daily_levels,weekly_levels,monthly_levels]
@@ -64,34 +64,56 @@ def CalculateLevels(ticker_symbol,date):
 class App:
     def __init__(self, root):
         self.root = root
-        self.root.title("Ticker Levels Calculator")
-        
-        tk.Label(root, text="Date (YYYY-MM-DD):").grid(row=0, column=0)
-        self.date_entry = tk.Entry(root)
-        self.date_entry.grid(row=0, column=1)
-        
-        tk.Label(root, text="Ticker Symbol:").grid(row=1, column=0)
-        self.ticker_entry = tk.Entry(root)
-        self.ticker_entry.grid(row=1, column=1)
-        
-        self.calculate_button = tk.Button(root, text="Calculate", command=self.calculate)
-        self.calculate_button.grid(row=2, column=0, columnspan=2)
-        
-        self.result_label = tk.Label(root, text="Results will be displayed here")
-        self.result_label.grid(row=3, column=0, columnspan=2)
-    
+        self.root.title("Probability Levels")
+        self.root.geometry("400x300")
+        self.root.configure(bg="#f0f0f0")
+
+        self.main_frame = ttk.Frame(root, padding="20")
+        self.main_frame.grid(row=0, column=0, sticky="nsew")
+        self.main_frame.configure(relief="sunken", borderwidth=2)
+
+        self.title_label = ttk.Label(self.main_frame, text="Probability Levels Calculator", font=("Helvetica", 16, "bold"))
+        self.title_label.grid(row=0, column=0, columnspan=2, pady=(0, 10))
+
+        self.input_frame = ttk.Frame(self.main_frame)
+        self.input_frame.grid(row=1, column=0, columnspan=2, pady=10)
+
+        ttk.Label(self.input_frame, text="Date (YYYY-MM-DD):", font=("Helvetica", 10)).grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.date_entry = ttk.Entry(self.input_frame, width=20, font=("Helvetica", 10))
+        self.date_entry.grid(row=0, column=1, padx=5, pady=5)
+
+        ttk.Label(self.input_frame, text="Ticker Symbol:", font=("Helvetica", 10)).grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        self.ticker_entry = ttk.Entry(self.input_frame, width=20, font=("Helvetica", 10))
+        self.ticker_entry.grid(row=1, column=1, padx=5, pady=5)
+
+        self.calculate_button = ttk.Button(self.main_frame, text="Calculate", command=self.calculate, style="Accent.TButton")
+        self.calculate_button.grid(row=2, column=0, columnspan=2, pady=10)
+
+        self.result_frame = ttk.Frame(self.main_frame, padding="10")
+        self.result_frame.grid(row=3, column=0, columnspan=2, pady=10)
+        self.result_frame.configure(relief="sunken", borderwidth=2)
+
+        self.result_label = ttk.Label(self.result_frame, text="Results will be displayed here", font=("Helvetica", 10), wraplength=400)
+        self.result_label.grid(row=0, column=0)
+
+        self.style = ttk.Style()
+        self.style.configure("Accent.TButton", font=("Helvetica", 10, "bold"), background="#4CAF50", foreground="white")
+        self.style.map("Accent.TButton", background=[("active", "#45a049")])
+
     def calculate(self):
         date_str = self.date_entry.get()
         ticker_symbol = self.ticker_entry.get()
         try:
             date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
             levels = CalculateLevels(ticker_symbol, date)
-            result_text = (f"Daily Levels: {levels[0]}\n"
-                           f"Weekly Levels: {levels[1]}\n"
-                           f"Monthly Levels: {levels[2]}")
-            self.result_label.config(text=result_text)
+            result_text = (
+                f"Daily Levels (SD+1, SD+2, SD+3): {round(float(levels[0][0]),2),round(float(levels[0][1]),2),round(float(levels[0][2]),2)}\n"
+                f"Weekly Levels (SD+1, SD+2, SD+3): {round(float(levels[1][0]),2),round(float(levels[1][1]),2),round(float(levels[1][2]),2)}\n"
+                f"Monthly Levels (SD+1, SD+2, SD+3): {round(float(levels[2][0]),2),round(float(levels[2][1]),2),round(float(levels[2][2]),2)}"
+            )
+            self.result_label.config(text=result_text, foreground="green")
         except Exception as e:
-            self.result_label.config(text=f"Error: {str(e)}")
+            self.result_label.config(text=f"This Date is a weekend or a holiday :) : {str(e)}", foreground="red")
 
 if __name__ == "__main__":
     root = tk.Tk()
