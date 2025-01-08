@@ -51,8 +51,15 @@ def GetCloses(ticker_symbol, date):
     
     Closes = [float(daily_close), float(weekly_close), float(monthly_close)]
     return Closes
+def CalculateLevels(ticker_symbol,date):   
 
-
+    Closes=GetCloses(ticker_symbol,date)
+    AllVols=VolTimeframe(date)
+    Daily_levels =[ AllVols[0] * Closes[0] +Closes[0] , 2*AllVols[0]*Closes[0]+Closes[0] , 3*AllVols[0]*Closes[0]+Closes[0] ]
+    weekly_levels=[ AllVols[1] * Closes[1] +Closes[1] , 2*AllVols[1]*Closes[1]+Closes[1] , 3*AllVols[1]*Closes[1]+Closes[1] ]
+    monthly_levels=[ AllVols[2] * Closes[2] +Closes[2] , 2*AllVols[2]*Closes[2]+Closes[2] , 3*AllVols[2]*Closes[2]+Closes[2] ]
+    Levels=[Daily_levels,weekly_levels,monthly_levels]
+    return Levels
 
 ticker_symbol = "AAPL"
 date = datetime.date(2023, 12, 6) 
