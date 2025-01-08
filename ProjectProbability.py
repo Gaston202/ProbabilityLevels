@@ -61,7 +61,39 @@ def CalculateLevels(ticker_symbol,date):
     Levels=[Daily_levels,weekly_levels,monthly_levels]
     return Levels
 
-ticker_symbol = "AAPL"
-date = datetime.date(2023, 12, 6) 
-closes = GetCloses(ticker_symbol, date)
-print(closes)
+class App:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Ticker Levels Calculator")
+        
+        tk.Label(root, text="Date (YYYY-MM-DD):").grid(row=0, column=0)
+        self.date_entry = tk.Entry(root)
+        self.date_entry.grid(row=0, column=1)
+        
+        tk.Label(root, text="Ticker Symbol:").grid(row=1, column=0)
+        self.ticker_entry = tk.Entry(root)
+        self.ticker_entry.grid(row=1, column=1)
+        
+        self.calculate_button = tk.Button(root, text="Calculate", command=self.calculate)
+        self.calculate_button.grid(row=2, column=0, columnspan=2)
+        
+        self.result_label = tk.Label(root, text="Results will be displayed here")
+        self.result_label.grid(row=3, column=0, columnspan=2)
+    
+    def calculate(self):
+        date_str = self.date_entry.get()
+        ticker_symbol = self.ticker_entry.get()
+        try:
+            date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+            levels = CalculateLevels(ticker_symbol, date)
+            result_text = (f"Daily Levels: {levels[0]}\n"
+                           f"Weekly Levels: {levels[1]}\n"
+                           f"Monthly Levels: {levels[2]}")
+            self.result_label.config(text=result_text)
+        except Exception as e:
+            self.result_label.config(text=f"Error: {str(e)}")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = App(root)
+    root.mainloop()
