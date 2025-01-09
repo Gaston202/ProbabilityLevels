@@ -156,7 +156,7 @@ class App:
                 self.result_label.config(text="No data found for the ticker symbol.", foreground="red")
                 return
 
-            fig, ax = plt.subplots(figsize=(8, 4))
+            fig, ax = plt.subplots(figsize=(20, 10))
             ax.plot(data.index, data["Close"], label="Close Price", color="blue")
 
             # Daily Levels
