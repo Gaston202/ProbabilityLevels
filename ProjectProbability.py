@@ -52,9 +52,30 @@ def GetCloses(ticker_symbol, date):
 def CalculateLevels(ticker_symbol, date):
     Closes = GetCloses(ticker_symbol, date)
     AllVols = VolTimeframe(date)
-    Daily_levels = [(AllVols[0] * Closes[0]) + Closes[0], (2 * AllVols[0] * Closes[0]) + Closes[0], (3 * AllVols[0] * Closes[0]) + Closes[0]]
-    weekly_levels = [AllVols[1] * Closes[1] + Closes[1], 2 * AllVols[1] * Closes[1] + Closes[1], 3 * AllVols[1] * Closes[1] + Closes[1]]
-    monthly_levels = [AllVols[2] * Closes[2] + Closes[2], 2 * AllVols[2] * Closes[2] + Closes[2], 3 * AllVols[2] * Closes[2] + Closes[2]]
+    Daily_levels = [
+        (AllVols[0] * Closes[0]) + Closes[0],  # SD+1
+        (2 * AllVols[0] * Closes[0]) + Closes[0],  # SD+2
+        (3 * AllVols[0] * Closes[0]) + Closes[0],  # SD+3
+        (-AllVols[0] * Closes[0]) + Closes[0],  # SD-1
+        (-2 * AllVols[0] * Closes[0]) + Closes[0],  # SD-2
+        (-3 * AllVols[0] * Closes[0]) + Closes[0],  # SD-3
+    ]
+    weekly_levels = [
+        AllVols[1] * Closes[1] + Closes[1],  # SD+1
+        2 * AllVols[1] * Closes[1] + Closes[1],  # SD+2
+        3 * AllVols[1] * Closes[1] + Closes[1],  # SD+3
+        -AllVols[1] * Closes[1] + Closes[1],  # SD-1
+        -2 * AllVols[1] * Closes[1] + Closes[1],  # SD-2
+        -3 * AllVols[1] * Closes[1] + Closes[1],  # SD-3
+    ]
+    monthly_levels = [
+        AllVols[2] * Closes[2] + Closes[2],  # SD+1
+        2 * AllVols[2] * Closes[2] + Closes[2],  # SD+2
+        3 * AllVols[2] * Closes[2] + Closes[2],  # SD+3
+        -AllVols[2] * Closes[2] + Closes[2],  # SD-1
+        -2 * AllVols[2] * Closes[2] + Closes[2],  # SD-2
+        -3 * AllVols[2] * Closes[2] + Closes[2],  # SD-3
+    ]
     Levels = [Daily_levels, weekly_levels, monthly_levels]
     return Levels
 
@@ -108,8 +129,11 @@ class App:
             levels = CalculateLevels(ticker_symbol, date)
             result_text = (
                 f"Daily Levels (SD+1, SD+2, SD+3): {round(float(levels[0][0]), 2), round(float(levels[0][1]), 2), round(float(levels[0][2]), 2)}\n"
+                f"Daily Levels (SD-1, SD-2, SD-3): {round(float(levels[0][3]), 2), round(float(levels[0][4]), 2), round(float(levels[0][5]), 2)}\n"
                 f"Weekly Levels (SD+1, SD+2, SD+3): {round(float(levels[1][0]), 2), round(float(levels[1][1]), 2), round(float(levels[1][2]), 2)}\n"
-                f"Monthly Levels (SD+1, SD+2, SD+3): {round(float(levels[2][0]), 2), round(float(levels[2][1]), 2), round(float(levels[2][2]), 2)}"
+                f"Weekly Levels (SD-1, SD-2, SD-3): {round(float(levels[1][3]), 2), round(float(levels[1][4]), 2), round(float(levels[1][5]), 2)}\n"
+                f"Monthly Levels (SD+1, SD+2, SD+3): {round(float(levels[2][0]), 2), round(float(levels[2][1]), 2), round(float(levels[2][2]), 2)}\n"
+                f"Monthly Levels (SD-1, SD-2, SD-3): {round(float(levels[2][3]), 2), round(float(levels[2][4]), 2), round(float(levels[2][5]), 2)}"
             )
             self.result_label.config(text=result_text, foreground="green")
         except Exception as e:
@@ -117,27 +141,56 @@ class App:
 
     def display_chart(self):
         ticker_symbol = self.ticker_entry.get()
-        if not ticker_symbol:
-            self.result_label.config(text="Please enter a ticker symbol.", foreground="red")
+        date_str = self.date_entry.get()
+        if not ticker_symbol or not date_str:
+            self.result_label.config(text="Please enter a ticker symbol and date.", foreground="red")
             return
 
         try:
+            date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+            levels = CalculateLevels(ticker_symbol, date)
+
             ticker = yf.Ticker(ticker_symbol)
-            data = ticker.history(period="1y", interval="1d")  # 1 year of daily data
+            data = ticker.history(period="1y", interval="1d") 
             if data.empty:
                 self.result_label.config(text="No data found for the ticker symbol.", foreground="red")
                 return
 
             fig, ax = plt.subplots(figsize=(8, 4))
             ax.plot(data.index, data["Close"], label="Close Price", color="blue")
-            ax.set_title(f"{ticker_symbol} Closing Prices (1 Year)")
+
+            # Daily Levels
+            ax.axhline(y=levels[0][0], color="green", linestyle="--", label="Daily SD+1")
+            ax.axhline(y=levels[0][1], color="orange", linestyle="--", label="Daily SD+2")
+            ax.axhline(y=levels[0][2], color="red", linestyle="--", label="Daily SD+3")
+            ax.axhline(y=levels[0][3], color="green", linestyle=":", label="Daily SD-1")
+            ax.axhline(y=levels[0][4], color="orange", linestyle=":", label="Daily SD-2")
+            ax.axhline(y=levels[0][5], color="red", linestyle=":", label="Daily SD-3")
+
+            # Weekly Levels
+            ax.axhline(y=levels[1][0], color="blue", linestyle="--", label="Weekly SD+1")
+            ax.axhline(y=levels[1][1], color="purple", linestyle="--", label="Weekly SD+2")
+            ax.axhline(y=levels[1][2], color="brown", linestyle="--")
+            ax.axhline(y=levels[1][3], color="blue", linestyle=":", label="Weekly SD-1")
+            ax.axhline(y=levels[1][4], color="purple", linestyle=":", label="Weekly SD-2")
+            ax.axhline(y=levels[1][5], color="brown", linestyle=":")
+
+            # Monthly Levels
+            ax.axhline(y=levels[2][0], color="cyan", linestyle="--", label="Monthly SD+1")
+            ax.axhline(y=levels[2][1], color="magenta", linestyle="--", label="Monthly SD+2")
+            ax.axhline(y=levels[2][2], color="yellow", linestyle="--")
+            ax.axhline(y=levels[2][3], color="cyan", linestyle=":", label="Monthly SD-1")
+            ax.axhline(y=levels[2][4], color="magenta", linestyle=":", label="Monthly SD-2")
+            ax.axhline(y=levels[2][5], color="yellow", linestyle=":")
+
+            ax.set_title(f"{ticker_symbol} Closing Prices with SD Levels (1 Year)")
             ax.set_xlabel("Date")
             ax.set_ylabel("Price (USD)")
             ax.legend()
             ax.grid(True)
 
             chart_window = tk.Toplevel(self.root)
-            chart_window.title(f"{ticker_symbol} Price Chart")
+            chart_window.title(f"{ticker_symbol} Price Chart with SD Levels")
             canvas = FigureCanvasTkAgg(fig, master=chart_window)
             canvas.draw()
             canvas.get_tk_widget().pack()
